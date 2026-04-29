@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Captured Photons Into a Black Hole</title>
+  <style>
+    :root {
+      --bg: #030712;
+      --panel: rgba(15, 23, 42, 0.91);
+      --panel2: rgba(2, 6, 23, 0.76);
+      --line: rgba(255,255,255,0.13);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --cyan: #67e8f9;
+      --gold: #facc15;
+      --red: #fb7185;
+      --green: #86efac;
+      --purple: #c4b5fd;
+      --orange: #fb923c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 72% 12%, rgba(124, 58, 237, 0.24), transparent 30%),
+        radial-gradient(circle at 42% 68%, rgba(14, 165, 233, 0.13), transparent 32%),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      min-height: 100vh;
+    }
+
+    aside {
+      border-right: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    main { position: relative; min-width: 0; }
+    canvas { width: 100%; height: 100vh; display: block; }
+
+    h1 {
+      margin: 0 0 7px;
+      font-size: 24px;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .card {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.26);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: #f9fafb;
+      letter-spacing: -0.01em;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .tag {
+      font-size: 10px;
+      color: #fecaca;
+      background: rgba(225, 29, 72, 0.15);
+      border: 1px solid rgba(251, 113, 133, 0.28);
+      border-radius: 999px;
+      padding: 3px 8px;
+      white-space: nowrap;
+    }
+
+    .tag.blue {
+      color: #bae6fd;
+      background: rgba(14, 165, 233, 0.13);
+      border-color: rgba(14, 165, 233, 0.26);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 120px;
+      gap: 10px;
+      align-items: center;
+      margin: 10px 0;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    input, select, button {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 9px 10px;
+      background: rgba(2, 6, 23, 0.82);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: rgba(103, 232, 249, 0.72);
+      box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.12);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 750;
+      transition: transform 0.12s ease, border-color 0.12s ease, filter 0.12s ease;
+    }
+
+    button:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.32); }
+    button.primary { background: linear-gradient(135deg, #be123c, #7c3aed); }
+    button.secondary { background: rgba(30, 41, 59, 0.92); }
+    button.danger { background: rgba(190, 18, 60, 0.52); }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .metric {
+      background: rgba(2, 6, 23, 0.58);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      min-height: 58px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 5px;
+    }
+
+    .metric strong {
+      font-size: 14px;
+      letter-spacing: -0.02em;
+      word-break: break-word;
+    }
+
+    .equation {
+      font-family: "Cambria Math", "Times New Roman", serif;
+      color: #f8fafc;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 10px;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .warning-box {
+      color: #fecaca;
+      background: rgba(225, 29, 72, 0.11);
+      border: 1px solid rgba(251, 113, 133, 0.24);
+      border-radius: 13px;
+      padding: 9px 10px;
+      font-size: 12px;
+      line-height: 1.4;
+      margin-top: 10px;
+    }
+
+    .status {
+      margin-top: 10px;
+      color: #dbeafe;
+      background: rgba(37, 99, 235, 0.14);
+      border: 1px solid rgba(96, 165, 250, 0.24);
+      border-radius: 13px;
+      padding: 9px 10px;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .hud, .legend {
+      position: absolute;
+      background: rgba(2, 6, 23, 0.66);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px 14px;
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+    }
+
+    .hud {
+      left: 18px;
+      top: 18px;
+      max-width: 620px;
+    }
+
+    .hud h3 {
+      margin: 0 0 5px;
+      font-size: 15px;
+    }
+
+    .hud p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .legend {
+      right: 18px;
+      top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .legend-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+    .swatch { width: 24px; height: 3px; border-radius: 999px; display: inline-block; }
+
+    @media (max-width: 940px) {
+      body { overflow: auto; }
+      .app { grid-template-columns: 1fr; }
+      aside { max-height: none; }
+      canvas { height: 72vh; }
+      .hud, .legend { position: static; margin: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <h1>Captured Photons Into a Black Hole</h1>
+      <p class="subtitle">
+        Capture-only photon simulation. You can now choose how many photons approach the black hole and arrange them from different directions.
+      </p>
+
+      <section class="card">
+        <h2>1. Black hole mass <span class="tag blue">sets real size</span></h2>
+        <div class="row">
+          <label for="preset">Black hole preset</label>
+          <select id="preset">
+            <option value="stellar" selected>Stellar black hole, 10 M☉</option>
+            <option value="sagA">Sagittarius A*, 4.3 million M☉</option>
+            <option value="m87">M87*, 6.5 billion M☉</option>
+            <option value="mini">Hypothetical mini black hole, 0.1 M☉</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="massSolar">Mass / solar masses M☉</label>
+          <input id="massSolar" type="number" step="any" value="10" />
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>2. Photon settings <span class="tag">capture only</span></h2>
+        <div class="row">
+          <label for="mode">Captured scenario</label>
+          <select id="mode">
+            <option value="direct">Direct fall</option>
+            <option value="bend" selected>Bent capture</option>
+            <option value="grazing">Near-critical capture</option>
+            <option value="beam">Captured beam</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="impact">Impact parameter b / Rₛ</label>
+          <input id="impact" type="number" step="any" value="2.25" />
+        </div>
+        <div class="row">
+          <label for="spread">Spread / Rₛ</label>
+          <input id="spread" type="number" step="any" value="0" />
+        </div>
+        <div class="row">
+          <label for="count">Number of photons</label>
+          <input id="count" type="number" min="1" max="36" step="1" value="8" />
+        </div>
+        <div class="row">
+          <label for="arrangement">Photon arrangement</label>
+          <select id="arrangement">
+            <option value="left-line">Left line</option>
+            <option value="left-fan">Fan from left</option>
+            <option value="opposite">Opposite sides</option>
+            <option value="ring" selected>Ring inward</option>
+            <option value="all-directions">All directions</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="start">Start distance / Rₛ</label>
+          <input id="start" type="number" step="any" value="22" />
+        </div>
+
+        <div class="warning-box">
+          All photons are forced into the capture range. They approach from different directions, but none are allowed to escape.
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>3. Animation controls</h2>
+        <div class="row">
+          <label for="dphi">Geodesic step Δφ / degrees</label>
+          <input id="dphi" type="number" step="any" value="0.035" />
+        </div>
+        <div class="row">
+          <label for="steps">Steps per frame</label>
+          <input id="steps" type="number" step="1" min="1" max="500" value="9" />
+        </div>
+        <div class="row">
+          <label for="view">View width / Rₛ</label>
+          <input id="view" type="number" step="any" value="44" />
+        </div>
+        <div class="buttons">
+          <button id="play" class="primary">Pause</button>
+          <button id="reset" class="secondary">Reset</button>
+          <button id="clear" class="secondary">Clear paths</button>
+          <button id="slow" class="danger">Slow motion</button>
+        </div>
+        <div id="status" class="status">Running. Photons are approaching from multiple directions.</div>
+      </section>
+
+      <section class="card">
+        <h2>Live measurements</h2>
+        <div class="readout">
+          <div class="metric"><span>Schwarzschild radius Rₛ</span><strong id="rsRead">—</strong></div>
+          <div class="metric"><span>Photon sphere</span><strong id="sphereRead">—</strong></div>
+          <div class="metric"><span>Critical impact b₍crit₎</span><strong id="bcritRead">—</strong></div>
+          <div class="metric"><span>Used b</span><strong id="bRead">—</strong></div>
+          <div class="metric"><span>Current r</span><strong id="rRead">—</strong></div>
+          <div class="metric"><span>Outcome</span><strong id="outcomeRead">—</strong></div>
+          <div class="metric"><span>Local photon speed</span><strong id="localSpeedRead">c</strong></div>
+          <div class="metric"><span>Far-observer coordinate speed</span><strong id="coordSpeedRead">—</strong></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Physics model <span class="tag blue">Schwarzschild</span></h2>
+        <div class="equation">
+          Rₛ = 2GM/c²<br>
+          u = Rₛ/r<br>
+          d²u/dφ² + u = 3u²/2<br>
+          b₍crit₎ = 3√3 Rₛ / 2
+        </div>
+        <p class="small">
+          The photons are generated as captured Schwarzschild null geodesics, then rotated to different approach directions around the black hole.
+        </p>
+      </section>
+    </aside>
+
+    <main>
+      <canvas id="sim"></canvas>
+      <div class="hud">
+        <h3>Multi-direction captured photons</h3>
+        <p>
+          Yellow path = outside horizon. Red path = inside horizon. Cyan arrow = photon direction. Red arrow = path-curvature direction. Different photons can now approach from different directions.
+        </p>
+      </div>
+      <div class="legend">
+        <div class="legend-row"><span class="swatch" style="background: var(--gold)"></span> Photon path outside horizon</div>
+        <div class="legend-row"><span class="swatch" style="background: var(--red)"></span> Inside horizon</div>
+        <div class="legend-row"><span class="swatch" style="background: var(--cyan)"></span> Photon direction</div>
+        <div class="legend-row"><span class="swatch" style="background: var(--purple)"></span> Photon sphere</div>
+        <div class="legend-row"><span class="swatch" style="background: var(--orange)"></span> Capture threshold</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const G = 6.67430e-11;
+    const C = 299792458;
+    const M_SUN = 1.98847e30;
+    const B_CRIT = 3 * Math.sqrt(3) / 2;
+    const B_CAPTURE_CAP = B_CRIT * 0.985;
+
+    const canvas = document.getElementById("sim");
+    const ctx = canvas.getContext("2d");
+
+    const ui = {
+      preset: document.getElementById("preset"),
+      massSolar: document.getElementById("massSolar"),
+      mode: document.getElementById("mode"),
+      impact: document.getElementById("impact"),
+      spread: document.getElementById("spread"),
+      count: document.getElementById("count"),
+      arrangement: document.getElementById("arrangement"),
+      start: document.getElementById("start"),
+      dphi: document.getElementById("dphi"),
+      steps: document.getElementById("steps"),
+      view: document.getElementById("view"),
+      play: document.getElementById("play"),
+      reset: document.getElementById("reset"),
+      clear: document.getElementById("clear"),
+      slow: document.getElementById("slow"),
+      status: document.getElementById("status"),
+      rsRead: document.getElementById("rsRead"),
+      sphereRead: document.getElementById("sphereRead"),
+      bcritRead: document.getElementById("bcritRead"),
+      bRead: document.getElementById("bRead"),
+      rRead: document.getElementById("rRead"),
+      outcomeRead: document.getElementById("outcomeRead"),
+      localSpeedRead: document.getElementById("localSpeedRead"),
+      coordSpeedRead: document.getElementById("coordSpeedRead")
+    };
+
+    const blackHolePresets = {
+      stellar: { massSolar: 10 },
+      sagA: { massSolar: 4.3e6 },
+      m87: { massSolar: 6.5e9 },
+      mini: { massSolar: 0.1 }
+    };
+
+    const modes = {
+      direct:  { b: 0.55, spread: 0.0, count: 6,  start: 20, view: 40, step: 0.040, steps: 11 },
+      bend:    { b: 2.25, spread: 0.0, count: 8,  start: 22, view: 44, step: 0.035, steps: 9 },
+      grazing: { b: 2.55, spread: 0.0, count: 10, start: 28, view: 54, step: 0.018, steps: 7 },
+      beam:    { b: 1.8,  spread: 1.4, count: 12, start: 24, view: 48, step: 0.030, steps: 8 }
+    };
+
+    const colors = [
+      "#facc15", "#67e8f9", "#86efac", "#f0abfc", "#fb923c",
+      "#93c5fd", "#fda4af", "#c4b5fd", "#bef264", "#fde68a",
+      "#99f6e4", "#d8b4fe", "#fecdd3", "#a7f3d0", "#e0e7ff",
+      "#fca5a5", "#7dd3fc", "#fde047", "#a3e635", "#c084fc"
+    ];
+
+    let dpr = Math.max(1, window.devicePixelRatio || 1);
+    let running = true;
+    let slowMode = false;
+    let photons = [];
+    let stars = [];
+
+    function number(input, fallback) {
+      const value = Number(input.value);
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    function params() {
+      const massSolar = Math.max(number(ui.massSolar, 10), 1e-12);
+      const massKg = massSolar * M_SUN;
+      const rsMeters = 2 * G * massKg / (C * C);
+      return {
+        massSolar,
+        massKg,
+        rsMeters,
+        rsKm: rsMeters / 1000,
+        impact: number(ui.impact, 2.25),
+        spread: Math.max(0, number(ui.spread, 0)),
+        count: Math.max(1, Math.min(36, Math.floor(number(ui.count, 8)))),
+        arrangement: ui.arrangement.value,
+        start: Math.max(4, number(ui.start, 22)),
+        dphi: Math.max(0.0005, number(ui.dphi, 0.035)) * Math.PI / 180,
+        steps: Math.max(1, Math.min(500, Math.floor(number(ui.steps, 9)))),
+        view: Math.max(8, number(ui.view, 44))
+      };
+    }
+
+    function resize() {
+      dpr = Math.max(1, window.devicePixelRatio || 1);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      makeStars();
+    }
+
+    function makeStars() {
+      const rect = canvas.getBoundingClientRect();
+      const n = Math.floor(rect.width * rect.height / 9500);
+      stars = [];
+      for (let i = 0; i < n; i++) {
+        stars.push({
+          x: Math.random() * rect.width,
+          y: Math.random() * rect.height,
+          r: 0.25 + Math.random() * 1.4,
+          a: 0.18 + Math.random() * 0.65
+        });
+      }
+    }
+
+    function clampToCaptureRange(rawB) {
+      const sign = rawB < 0 ? -1 : 1;
+      let b = Math.abs(rawB);
+      b = Math.min(b, B_CAPTURE_CAP);
+      b = Math.max(b, 0.045);
+      return sign * b;
+    }
+
+    function worldToScreen(x, y) {
+      const rect = canvas.getBoundingClientRect();
+      const p = params();
+      const scale = rect.width / p.view;
+      return {
+        x: rect.width / 2 + x * scale,
+        y: rect.height / 2 - y * scale
+      };
+    }
+
+    function screenRadius(rRs) {
+      const rect = canvas.getBoundingClientRect();
+      const p = params();
+      return rRs * rect.width / p.view;
+    }
+
+    function rotatePoint(x, y, angle) {
+      const ca = Math.cos(angle);
+      const sa = Math.sin(angle);
+      return {
+        x: x * ca - y * sa,
+        y: x * sa + y * ca
+      };
+    }
+
+    function initializePhoton(rawSignedB, rotation, index) {
+      const p = params();
+      const signedB = clampToCaptureRange(rawSignedB);
+      const sign = signedB < 0 ? -1 : 1;
+      const b = Math.abs(signedB);
+
+      const startX = -p.start;
+      const startY = b;
+      const r0 = Math.hypot(startX, startY);
+      const phi0 = Math.atan2(startY, startX);
+      const u0 = 1 / r0;
+      const w0 = Math.cos(phi0) / b;
+
+      const rotatedStart = rotatePoint(startX, sign * startY, rotation);
+
+      return {
+        b,
+        rawB: rawSignedB,
+        signedB,
+        phi: phi0,
+        u: u0,
+        w: w0,
+        rotation,
+        color: colors[index % colors.length],
+        status: "active",
+        crossedHorizon: false,
+        trail: [{ x: rotatedStart.x, y: rotatedStart.y, r: r0, inside: false }],
+        minR: r0,
+        stepsTaken: 0
+      };
+    }
+
+    function buildPhotonSet() {
+      const p = params();
+      const arr = [];
+      const n = p.count;
+
+      function spreadValue(i, total) {
+        if (total === 1) return p.impact;
+        const t = i / (total - 1) - 0.5;
+        return p.impact + t * p.spread;
+      }
+
+      if (p.arrangement === "left-line") {
+        for (let i = 0; i < n; i++) {
+          arr.push(initializePhoton(spreadValue(i, n), 0, i));
+        }
+      }
+      else if (p.arrangement === "left-fan") {
+        const fanAngle = Math.PI / 2.6;
+        for (let i = 0; i < n; i++) {
+          const t = n === 1 ? 0 : i / (n - 1) - 0.5;
+          const rot = t * fanAngle;
+          arr.push(initializePhoton(spreadValue(i, n), rot, i));
+        }
+      }
+      else if (p.arrangement === "opposite") {
+        for (let i = 0; i < n; i++) {
+          const half = Math.floor(i / 2);
+          const rot = (i % 2 === 0) ? 0 : Math.PI;
+          arr.push(initializePhoton(spreadValue(half, Math.ceil(n / 2)), rot, i));
+        }
+      }
+      else if (p.arrangement === "ring") {
+        for (let i = 0; i < n; i++) {
+          const rot = (2 * Math.PI * i) / n;
+          arr.push(initializePhoton(p.impact, rot, i));
+        }
+      }
+      else if (p.arrangement === "all-directions") {
+        for (let i = 0; i < n; i++) {
+          const rot = (2 * Math.PI * i) / n;
+          const alt = spreadValue(i, n);
+          arr.push(initializePhoton(alt, rot, i));
+        }
+      }
+
+      return arr;
+    }
+
+    function resetSimulation() {
+      photons = buildPhotonSet();
+      running = true;
+      slowMode = false;
+      ui.play.textContent = "Pause";
+      ui.slow.textContent = "Slow motion";
+      ui.status.textContent = "Running. Photons are approaching from multiple directions.";
+    }
+
+    function photonPosition(ph) {
+      if (ph.u <= 0) return null;
+      const r = 1 / ph.u;
+      const xBase = r * Math.cos(ph.phi);
+      const yBase = r * Math.sin(ph.phi);
+      const rot = rotatePoint(xBase, yBase, ph.rotation);
+      return {
+        r,
+        x: rot.x,
+        y: rot.y,
+        inside: r <= 1
+      };
+    }
+
+    function derivatives(q) {
+      return {
+        u: q.w,
+        w: 1.5 * q.u * q.u - q.u
+      };
+    }
+
+    function rk4(ph, h) {
+      const q = { u: ph.u, w: ph.w };
+      const k1 = derivatives(q);
+      const k2 = derivatives({ u: q.u + 0.5 * h * k1.u, w: q.w + 0.5 * h * k1.w });
+      const k3 = derivatives({ u: q.u + 0.5 * h * k2.u, w: q.w + 0.5 * h * k2.w });
+      const k4 = derivatives({ u: q.u + h * k3.u, w: q.w + h * k3.w });
+      ph.u += (h / 6) * (k1.u + 2 * k2.u + 2 * k3.u + k4.u);
+      ph.w += (h / 6) * (k1.w + 2 * k2.w + 2 * k3.w + k4.w);
+      ph.phi += h;
+      ph.stepsTaken += 1;
+    }
+
+    function tangentDirection(ph) {
+      const u = Math.max(ph.u, 1e-9);
+      const dxDphi = -Math.sin(ph.phi) / u - Math.cos(ph.phi) * ph.w / (u * u);
+      const dyDphi =  Math.cos(ph.phi) / u - Math.sin(ph.phi) * ph.w / (u * u);
+
+      let dx = -dxDphi;
+      let dy = -dyDphi;
+
+      const rot = rotatePoint(dx, dy, ph.rotation);
+      const mag = Math.hypot(rot.x, rot.y) || 1;
+      return { dx: rot.x / mag, dy: rot.y / mag };
+    }
+
+    function updatePhoton(ph) {
+      if (ph.status !== "active") return;
+      const p = params();
+      const h = -p.dphi;
+      rk4(ph, h);
+
+      const pos = photonPosition(ph);
+      if (!pos || !Number.isFinite(pos.r)) {
+        ph.status = "singularity";
+        return;
+      }
+
+      ph.minR = Math.min(ph.minR, pos.r);
+      if (pos.r <= 1) ph.crossedHorizon = true;
+
+      ph.trail.push({ x: pos.x, y: pos.y, r: pos.r, inside: pos.r <= 1 });
+      if (ph.trail.length > 3600) ph.trail.shift();
+
+      if (pos.r <= 0.10 || ph.u >= 10) {
+        ph.status = "singularity";
+        return;
+      }
+
+      if (ph.stepsTaken > 12000) {
+        ph.status = "near horizon spiral";
+      }
+    }
+
+    function updatePhysics() {
+      if (!running) return;
+      const p = params();
+      const steps = slowMode ? Math.max(1, Math.floor(p.steps / 6)) : p.steps;
+      for (let i = 0; i < steps; i++) {
+        for (const ph of photons) updatePhoton(ph);
+      }
+      if (photons.every(ph => ph.status !== "active")) {
+        running = false;
+        ui.play.textContent = "Replay";
+        const done = photons.filter(ph => ph.status === "singularity").length;
+        const spiral = photons.filter(ph => ph.status === "near horizon spiral").length;
+        ui.status.textContent = `Capture complete: ${done} photon(s) reached the central region; ${spiral} remained near the horizon in the displayed time.`;
+      }
+    }
+
+    function drawBackground() {
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      const gradient = ctx.createRadialGradient(rect.width / 2, rect.height / 2, 0, rect.width / 2, rect.height / 2, Math.max(rect.width, rect.height) * 0.66);
+      gradient.addColorStop(0, "#111827");
+      gradient.addColorStop(0.50, "#07111f");
+      gradient.addColorStop(1, "#030712");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, rect.width, rect.height);
+
+      for (const s of stars) {
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        const dx = s.x - cx;
+        const dy = s.y - cy;
+        const d = Math.hypot(dx, dy);
+        const bend = d < 220 ? (1 - d / 220) * 8 : 0;
+        const bx = d > 0 ? s.x + dx / d * bend : s.x;
+        const by = d > 0 ? s.y + dy / d * bend : s.y;
+        ctx.fillStyle = `rgba(255,255,255,${s.a})`;
+        ctx.beginPath();
+        ctx.arc(bx, by, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function chooseGridStep(view) {
+      const raw = view / 9;
+      const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+      const normalized = raw / pow;
+      if (normalized < 1.5) return 1 * pow;
+      if (normalized < 3.5) return 2 * pow;
+      if (normalized < 7.5) return 5 * pow;
+      return 10 * pow;
+    }
+
+    function drawGrid() {
+      const rect = canvas.getBoundingClientRect();
+      const p = params();
+      const step = chooseGridStep(p.view);
+      const halfW = p.view / 2;
+      const halfH = rect.height / rect.width * p.view / 2;
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.045)";
+      ctx.lineWidth = 1;
+      for (let x = -halfW; x <= halfW; x += step) {
+        const a = worldToScreen(x, 0);
+        ctx.beginPath();
+        ctx.moveTo(a.x, 0);
+        ctx.lineTo(a.x, rect.height);
+        ctx.stroke();
+      }
+      for (let y = -halfH; y <= halfH; y += step) {
+        const a = worldToScreen(0, y);
+        ctx.beginPath();
+        ctx.moveTo(0, a.y);
+        ctx.lineTo(rect.width, a.y);
+        ctx.stroke();
+      }
+      const c = worldToScreen(0, 0);
+      ctx.strokeStyle = "rgba(255,255,255,0.13)";
+      ctx.beginPath();
+      ctx.moveTo(0, c.y);
+      ctx.lineTo(rect.width, c.y);
+      ctx.moveTo(c.x, 0);
+      ctx.lineTo(c.x, rect.height);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawCircleRs(radiusRs, stroke, dash, label, labelAngle = -0.72) {
+      const center = worldToScreen(0, 0);
+      const r = screenRadius(radiusRs);
+      ctx.save();
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.6;
+      if (dash) ctx.setLineDash(dash);
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (label) {
+        const lx = center.x + Math.cos(labelAngle) * (r + 8);
+        const ly = center.y + Math.sin(labelAngle) * (r + 8);
+        ctx.fillStyle = "rgba(255,255,255,0.88)";
+        ctx.font = "bold 11px Inter, sans-serif";
+        ctx.fillText(label, lx, ly);
+      }
+      ctx.restore();
+    }
+
+    function drawBlackHole() {
+      const center = worldToScreen(0, 0);
+      const horizon = Math.max(screenRadius(1), 8);
+      const glow = ctx.createRadialGradient(center.x, center.y, horizon * 0.8, center.x, center.y, horizon * 4.7);
+      glow.addColorStop(0, "rgba(0,0,0,1)");
+      glow.addColorStop(0.28, "rgba(15,23,42,0.94)");
+      glow.addColorStop(0.52, "rgba(124,58,237,0.20)");
+      glow.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, horizon * 4.7, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawCircleRs(1.5, "rgba(196,181,253,0.72)", [8, 7], "photon sphere", -1.0);
+
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.82)";
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, horizon, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.30)";
+      ctx.lineWidth = 1.25;
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.88)";
+      ctx.font = "bold 12px Inter, sans-serif";
+      ctx.fillText("event horizon: r = Rₛ", center.x + horizon + 10, center.y + 4);
+      ctx.restore();
+    }
+
+    function drawCaptureBand() {
+      const rect = canvas.getBoundingClientRect();
+      ctx.save();
+      ctx.strokeStyle = "rgba(251,146,60,0.42)";
+      ctx.setLineDash([4, 7]);
+      const y1 = worldToScreen(0, B_CRIT).y;
+      const y2 = worldToScreen(0, -B_CRIT).y;
+      ctx.beginPath();
+      ctx.moveTo(0, y1);
+      ctx.lineTo(rect.width, y1);
+      ctx.moveTo(0, y2);
+      ctx.lineTo(rect.width, y2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(251,146,60,0.86)";
+      ctx.font = "bold 11px Inter, sans-serif";
+      ctx.fillText("|b| < bcrit gives capture", 18, y1 - 8);
+      ctx.restore();
+    }
+
+    function drawArrow(x1, y1, x2, y2, color, width = 2.4) {
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const head = 9;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - head * Math.cos(angle - Math.PI / 6), y2 - head * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(x2 - head * Math.cos(angle + Math.PI / 6), y2 - head * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function hexToRgba(hex, alpha) {
+      const h = hex.replace("#", "");
+      const r = parseInt(h.substring(0,2), 16);
+      const g = parseInt(h.substring(2,4), 16);
+      const b = parseInt(h.substring(4,6), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    function drawPhotons() {
+      for (const ph of photons) {
+        if (ph.trail.length > 1) {
+          ctx.save();
+          ctx.lineWidth = 2.55;
+          ctx.lineJoin = "round";
+          ctx.lineCap = "round";
+          for (let i = 1; i < ph.trail.length; i++) {
+            const prev = ph.trail[i - 1];
+            const curr = ph.trail[i];
+            const a = worldToScreen(prev.x, prev.y);
+            const b = worldToScreen(curr.x, curr.y);
+            const alpha = Math.max(0.08, i / ph.trail.length);
+            ctx.strokeStyle = curr.inside ? `rgba(251,113,133,${Math.max(0.35, alpha)})` : hexToRgba(ph.color, alpha);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+
+        const pos = photonPosition(ph);
+        if (!pos || ph.status === "singularity") continue;
+        const screen = worldToScreen(pos.x, pos.y);
+
+        ctx.save();
+        ctx.shadowColor = pos.inside ? "rgba(251,113,133,0.95)" : hexToRgba(ph.color, 0.9);
+        ctx.shadowBlur = 14;
+        ctx.fillStyle = pos.inside ? "#fb7185" : ph.color;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, 5.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        if (ph.status === "active") {
+          const dir = tangentDirection(ph);
+          drawArrow(screen.x, screen.y, screen.x + dir.dx * 44, screen.y - dir.dy * 44, "#67e8f9", 2.6);
+
+          const center = worldToScreen(0, 0);
+          const toCx = center.x - screen.x;
+          const toCy = center.y - screen.y;
+          const mag = Math.hypot(toCx, toCy) || 1;
+          drawArrow(screen.x, screen.y, screen.x + toCx / mag * 40, screen.y + toCy / mag * 40, "#fb7185", 2.2);
+        }
+      }
+    }
+
+    function formatKm(km) {
+      const abs = Math.abs(km);
+      if (abs >= 1e9) return `${(km / 1e9).toFixed(3)} billion km`;
+      if (abs >= 1e6) return `${(km / 1e6).toFixed(3)} million km`;
+      if (abs >= 1000) return `${km.toLocaleString(undefined, { maximumFractionDigits: 0 })} km`;
+      return `${km.toFixed(3)} km`;
+    }
+
+    function updateReadouts() {
+      const p = params();
+      ui.rsRead.textContent = formatKm(p.rsKm);
+      ui.sphereRead.textContent = `1.5 Rₛ = ${formatKm(1.5 * p.rsKm)}`;
+      ui.bcritRead.textContent = `${B_CRIT.toFixed(3)} Rₛ`;
+
+      const usedValues = photons.map(ph => ph.signedB);
+      if (usedValues.length === 1) {
+        ui.bRead.textContent = `${usedValues[0].toFixed(3)} Rₛ`;
+      } else {
+        const min = Math.min(...usedValues);
+        const max = Math.max(...usedValues);
+        ui.bRead.textContent = `${min.toFixed(2)} to ${max.toFixed(2)} Rₛ`;
+      }
+
+      const active = photons.find(ph => ph.status === "active") || photons[0];
+      if (active) {
+        const pos = photonPosition(active);
+        if (pos) {
+          ui.rRead.textContent = `${pos.r.toFixed(3)} Rₛ = ${formatKm(pos.r * p.rsKm)}`;
+          if (pos.r > 1) {
+            const coordRatio = Math.max(0, 1 - 1 / pos.r);
+            ui.coordSpeedRead.textContent = `${coordRatio.toFixed(3)} c`;
+          } else {
+            ui.coordSpeedRead.textContent = "inside horizon: inward only";
+          }
+        } else {
+          ui.rRead.textContent = "near singularity";
+          ui.coordSpeedRead.textContent = "—";
+        }
+      }
+
+      ui.localSpeedRead.textContent = "c = 2.998×10⁸ m/s";
+
+      const activeCount = photons.filter(ph => ph.status === "active").length;
+      const crossed = photons.filter(ph => ph.crossedHorizon).length;
+      const done = photons.filter(ph => ph.status === "singularity").length;
+      const spiral = photons.filter(ph => ph.status === "near horizon spiral").length;
+      ui.outcomeRead.textContent = `${activeCount} active, ${crossed} crossed horizon, ${done} near singularity${spiral ? `, ${spiral} near-horizon` : ""}`;
+    }
+
+    function render() {
+      drawBackground();
+      drawGrid();
+      drawCaptureBand();
+      drawBlackHole();
+      drawPhotons();
+      updateReadouts();
+    }
+
+    function animate() {
+      updatePhysics();
+      render();
+      requestAnimationFrame(animate);
+    }
+
+    ui.preset.addEventListener("change", () => {
+      const key = ui.preset.value;
+      if (key !== "custom" && blackHolePresets[key]) {
+        ui.massSolar.value = blackHolePresets[key].massSolar;
+      }
+      resetSimulation();
+    });
+
+    ui.massSolar.addEventListener("change", () => {
+      ui.preset.value = "custom";
+      resetSimulation();
+    });
+
+    ui.mode.addEventListener("change", () => {
+      const key = ui.mode.value;
+      if (key !== "custom" && modes[key]) {
+        const m = modes[key];
+        ui.impact.value = m.b;
+        ui.spread.value = m.spread;
+        ui.count.value = m.count;
+        ui.start.value = m.start;
+        ui.view.value = m.view;
+        ui.dphi.value = m.step;
+        ui.steps.value = m.steps;
+      }
+      resetSimulation();
+    });
+
+    [
+      ui.impact, ui.spread, ui.count, ui.arrangement,
+      ui.start, ui.dphi, ui.steps, ui.view
+    ].forEach(el => {
+      el.addEventListener("change", () => {
+        ui.mode.value = "custom";
+        resetSimulation();
+      });
+    });
+
+    ui.play.addEventListener("click", () => {
+      if (photons.every(ph => ph.status !== "active")) {
+        resetSimulation();
+        return;
+      }
+      running = !running;
+      ui.play.textContent = running ? "Pause" : "Play";
+      ui.status.textContent = running ? "Running. Photons are approaching from multiple directions." : "Paused.";
+    });
+
+    ui.reset.addEventListener("click", resetSimulation);
+
+    ui.clear.addEventListener("click", () => {
+      for (const ph of photons) {
+        const pos = photonPosition(ph);
+        ph.trail = pos ? [{ x: pos.x, y: pos.y, r: pos.r, inside: pos.r <= 1 }] : [];
+      }
+    });
+
+    ui.slow.addEventListener("click", () => {
+      slowMode = !slowMode;
+      ui.slow.textContent = slowMode ? "Normal speed" : "Slow motion";
+      ui.status.textContent = slowMode
+        ? "Slow motion changes only visual playback. Local photon speed is still c."
+        : "Running at normal visual speed. Local photon speed is still c.";
+    });
+
+    window.addEventListener("resize", resize);
+
+    resize();
+    resetSimulation();
+    animate();
+  </script>
+</body>
+</html>
